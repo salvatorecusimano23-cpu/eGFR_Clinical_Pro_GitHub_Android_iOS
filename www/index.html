@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0F4C81" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="eGFR Pro" />
+  <title>eGFR Clinical Pro — CKD-EPI 2021</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top App Bar (Shneiderman #1 Consistency, #7 Internal Locus of Control) -->
+    <header class="top-bar">
+      <div class="brand">
+        <div class="logo-badge" aria-hidden="true">eGFR</div>
+        <div>
+          <h1>eGFR Clinical Pro</h1>
+          <span class="subtitle">CKD-EPI 2021 (Race-Free) • KDIGO</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btnHistory" class="icon-btn" title="Storico calcoli sessione" aria-label="Storico calcoli">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span id="historyCount" class="badge-dot hidden">0</span>
+        </button>
+        <button id="btnInfo" class="icon-btn" title="Criteri UX e Formula" aria-label="Informazioni cliniche e UX">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Quick Presets / Shortcuts (Shneiderman #2 Shortcuts for Frequent Users) -->
+      <section class="shortcuts-bar" aria-label="Casi clinici rapidi">
+        <span class="shortcuts-label">Test rapido:</span>
+        <button type="button" class="chip-btn" data-preset="normal">Normale (45a, Cr 0.9)</button>
+        <button type="button" class="chip-btn" data-preset="g3b">IRC G3b (68a, Cr 1.85)</button>
+        <button type="button" class="chip-btn" data-preset="g4">IRC G4 (76a, Cr 2.9)</button>
+      </section>
+
+      <!-- Input Card (Norman Affordance, Mapping, Constraints; Shneiderman #5 Error Prevention) -->
+      <section class="card input-card" aria-labelledby="formHeading">
+        <div class="card-header">
+          <h2 id="formHeading">Parametri Paziente</h2>
+          <button type="button" id="btnReset" class="text-btn danger-text" title="Azzera tutti i campi (Shneiderman #6 Reversibilità)">
+            ↺ Azzera
+          </button>
+        </div>
+
+        <!-- 1. Sesso Biologico (Segmented Control - Zero ambiguity, 1-tap) -->
+        <div class="field-group">
+          <label class="field-label">Sesso Biologico <span class="req">*</span></label>
+          <div class="segmented-control" role="radiogroup" aria-label="Sesso biologico">
+            <button type="button" class="seg-btn active" data-sex="F" aria-checked="true">
+              <span class="seg-icon">♀</span> Femmina
+            </button>
+            <button type="button" class="seg-btn" data-sex="M" aria-checked="false">
+              <span class="seg-icon">♂</span> Maschio
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Età (Numeric keypad + steppers + clinical constraint validation) -->
+        <div class="field-group">
+          <div class="label-row">
+            <label for="ageInput" class="field-label">Età (anni) <span class="req">*</span></label>
+            <span class="range-hint">Range validato: 18 – 120 anni</span>
+          </div>
+          <div class="input-stepper-wrap">
+            <button type="button" class="step-btn" data-target="ageInput" data-step="-1" aria-label="Riduci età di 1 anno">−</button>
+            <input type="number" id="ageInput" inputmode="numeric" min="18" max="120" step="1" placeholder="es. 65" autocomplete="off" />
+            <button type="button" class="step-btn" data-target="ageInput" data-step="1" aria-label="Aumenta età di 1 anno">+</button>
+          </div>
+          <p id="ageFeedback" class="field-feedback" role="alert"></p>
+        </div>
+
+        <!-- 3. Creatinina Sierica + Unit Switcher (Automatic bidirectional conversion mg/dL <-> µmol/L) -->
+        <div class="field-group">
+          <div class="label-row">
+            <label for="crInput" class="field-label">Creatinina Sierica <span class="req">*</span></label>
+            <div class="unit-toggle" role="group" aria-label="Unità di misura creatinina">
+              <button type="button" class="unit-btn active" data-unit="mgdl">mg/dL</button>
+              <button type="button" class="unit-btn" data-unit="umol">µmol/L</button>
+            </div>
+          </div>
+          <div class="input-stepper-wrap">
+            <button type="button" class="step-btn" data-target="crInput" data-step="-0.1" aria-label="Riduci creatinina">−</button>
+            <input type="number" id="crInput" inputmode="decimal" min="0.1" max="30" step="0.01" placeholder="es. 1.15" autocomplete="off" />
+            <button type="button" class="step-btn" data-target="crInput" data-step="0.1" aria-label="Aumenta creatinina">+</button>
+          </div>
+          <div class="sub-row">
+            <p id="crFeedback" class="field-feedback" role="alert"></p>
+            <span id="crConverted" class="conversion-pill"></span>
+          </div>
+        </div>
+
+        <!-- 4. Opzionale: Cistatina C (CKD-EPI 2021 Cr-Cys) & Superficie Corporea (eGFR non indicizzato) -->
+        <details class="optional-drawer">
+          <summary>Parametri avanzati opzionali (Cistatina C / BSA)</summary>
+          <div class="drawer-body">
+            <div class="field-group">
+              <div class="label-row">
+                <label for="cysInput" class="field-label">Cistatina C (mg/L)</label>
+                <span class="range-hint">Attiva formula combinata Cr-Cys</span>
+              </div>
+              <input type="number" id="cysInput" inputmode="decimal" min="0.2" max="15" step="0.01" placeholder="Opzionale (es. 1.05)" />
+              <p id="cysFeedback" class="field-feedback" role="alert"></p>
+            </div>
+
+            <div class="two-col">
+              <div class="field-group">
+                <label for="weightInput" class="field-label">Peso (kg)</label>
+                <input type="number" id="weightInput" inputmode="decimal" min="20" max="300" step="0.5" placeholder="es. 72" />
+              </div>
+              <div class="field-group">
+                <label for="heightInput" class="field-label">Altezza (cm)</label>
+                <input type="number" id="heightInput" inputmode="numeric" min="100" max="250" step="1" placeholder="es. 175" />
+              </div>
+            </div>
+            <p class="helper-note">Inserendo Peso e Altezza viene calcolato anche l'eGFR assoluto (mL/min) tramite formula di Du Bois per aggiustamento posologico farmacologico.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Live Result Card (Shneiderman #3 Informative Feedback, #8 Reduce Short-Term Memory Load) -->
+      <section id="resultSection" class="card result-card empty-state" aria-live="polite">
+        <div id="emptyResultPrompt" class="empty-prompt">
+          <div class="pulse-ring"></div>
+          <p>Inserisci <strong>Età</strong> e <strong>Creatinina</strong> per il calcolo istantaneo dell'eGFR e la stadiazione KDIGO.</p>
+        </div>
+
+        <div id="populatedResult" class="hidden">
+          <div class="result-top">
+            <div>
+              <span id="equationUsedBadge" class="eq-badge">CKD-EPI Creatinina 2021</span>
+              <div class="egfr-value-row">
+                <span id="egfrNumber" class="egfr-number">--</span>
+                <span class="egfr-unit">mL/min/1.73m²</span>
+              </div>
+            </div>
+            <div id="stageBadge" class="stage-badge stage-g1">G1</div>
+          </div>
+
+          <!-- Visual KDIGO Gauge (Norman Signifiers & Conceptual Model) -->
+          <div class="kdigo-scale" aria-hidden="true">
+            <div class="scale-bar">
+              <div class="seg s-g1" title="G1 ≥90">G1</div>
+              <div class="seg s-g2" title="G2 60-89">G2</div>
+              <div class="seg s-g3a" title="G3a 45-59">G3a</div>
+              <div class="seg s-g3b" title="G3b 30-44">G3b</div>
+              <div class="seg s-g4" title="G4 15-29">G4</div>
+              <div class="seg s-g5" title="G5 <15">G5</div>
+            </div>
+            <div id="scaleMarker" class="scale-marker" style="left: 90%;">▼</div>
+          </div>
+
+          <div id="clinicalAlertBox" class="clinical-box">
+            <h3 id="stageTitle">Funzione renale normale o elevata</h3>
+            <p id="stageDescription">eGFR ≥ 90 mL/min/1.73m². In assenza di marcatori di danno renale (es. albuminuria), non indica malattia renale cronica.</p>
+            <div id="bsaResultRow" class="bsa-row hidden">
+              <strong>eGFR non indicizzato (Du Bois):</strong> <span id="absEgfrVal">--</span> mL/min (BSA: <span id="bsaVal">--</span> m²)
+            </div>
+          </div>
+
+          <!-- Action Bar: Copy Clinical Note & Save to Session (Shneiderman #4 Closure) -->
+          <div class="result-actions">
+            <button type="button" id="btnCopyReport" class="primary-btn">
+              📋 Copia Referto Clinico
+            </button>
+            <button type="button" id="btnSaveSession" class="secondary-btn">
+              💾 Salva in Cronologia
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toast Notification (Informative Feedback) -->
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- Modal: Session History (Undo / Recall - Shneiderman #6 & #8) -->
+    <div id="historyModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="histModalTitle">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h2 id="histModalTitle">Cronologia Calcoli Sessione</h2>
+          <button type="button" class="close-modal" data-close="historyModal" aria-label="Chiudi">✕</button>
+        </div>
+        <div id="historyList" class="modal-body">
+          <p class="muted-center">Nessun calcolo salvato in questa sessione.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btnClearHistory" class="text-btn danger-text">Svuota cronologia</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Clinical & UX Reference -->
+    <div id="infoModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h2 id="infoModalTitle">Modello Clinico & Ergonomia UX</h2>
+          <button type="button" class="close-modal" data-close="infoModal" aria-label="Chiudi">✕</button>
+        </div>
+        <div class="modal-body info-text">
+          <h4>Equazioni Implementate</h4>
+          <p><strong>CKD-EPI 2021 (Inker et al., NEJM 2021):</strong> Formula priva del coefficiente correttivo etnico per creatinina sierica ed equazione combinata Creatinina + Cistatina C.</p>
+          <h4>Principi di Usabilità Applicati (ISO 9241-210)</h4>
+          <ul>
+            <li><strong>Prevenzione Errori (Shneiderman #5 / Norman Constraints):</strong> Blocco valori non fisiologici, warning su valori critici, conversione automatica bidirezionale mg/dL ↔ µmol/L senza perdita di dato.</li>
+            <li><strong>Feedback Continuo (Shneiderman #3 / Norman Feedback):</strong> Calcolo real-time senza click superflui, indicatore visivo su scala KDIGO G1–G5 e badge cromatici ad alto contrasto.</li>
+            <li><strong>Riduzione Carico Cognitivo (Shneiderman #8):</strong> Referto clinico strutturato copiabile con un tocco e cronologia rapida per confronti seriati.</li>
+            <li><strong>Reversibilità & Controllo (Shneiderman #6, #7):</strong> Ripristino rapido ("Azzera") e possibilità di ricaricare qualsiasi calcolo dalla cronologia.</li>
+          </ul>
+          <p class="disclaimer">Strumento di supporto decisionale clinico e didattico (MEDIT UniPa). Non sostituisce il giudizio medico.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

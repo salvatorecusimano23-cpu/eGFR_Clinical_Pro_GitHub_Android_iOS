@@ -1,0 +1,22 @@
+{
+  "name": "eGFR Clinical Pro — CKD-EPI 2021",
+  "short_name": "eGFR Pro",
+  "description": "Calcolatore clinico eGFR CKD-EPI 2021 progettato secondo ISO 9241-210, Shneiderman e Norman.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0F4C81",
+  "theme_color": "#0F4C81",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
